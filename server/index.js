@@ -19,7 +19,15 @@ const server = createServer(app);
 
 // Environment-based configuration
 const isProduction = process.env.NODE_ENV === 'production';
+const isRailway = process.env.RAILWAY_ENVIRONMENT === 'production' || process.env.RAILWAY_PROJECT_ID;
 const frontendUrl = isProduction ? process.env.RAILWAY_STATIC_URL || 'https://your-app.railway.app' : 'http://localhost:5173';
+
+console.log('🌍 Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  isProduction,
+  isRailway,
+  PORT: process.env.PORT
+});
 
 const io = new Server(server, {
   cors: {
@@ -207,8 +215,22 @@ app.get('/health', (req, res) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    port: process.env.PORT || 3001
+    port: process.env.PORT || 3001,
+    railway: isRailway
   });
+});
+
+// Basic test route
+app.get('/', (req, res) => {
+  if (isProduction) {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  } else {
+    res.json({ 
+      message: 'WhatsApp LIMS Integration Server', 
+      status: 'running',
+      environment: process.env.NODE_ENV || 'development'
+    });
+  }
 });
 
 // Basic API status endpoint
@@ -243,13 +265,29 @@ if (isProduction) {
 }
 
 // Initialize WhatsApp service with error handling
+let whatsappInitialized = false;
 try {
   console.log('🔄 Initializing WhatsApp service...');
-  whatsappService.initialize();
-  console.log('✅ WhatsApp service initialization started');
+  
+  // In production, delay WhatsApp initialization to let server start first
+  if (isProduction) {
+    console.log('🚀 Production mode: Starting server first, WhatsApp will initialize after 10 seconds');
+    setTimeout(() => {
+      try {
+        whatsappService.initialize();
+        whatsappInitialized = true;
+        console.log('✅ WhatsApp service initialization started (delayed)');
+      } catch (error) {
+        console.error('❌ WhatsApp service initialization failed (delayed):', error);
+      }
+    }, 10000); // 10 second delay in production
+  } else {
+    whatsappService.initialize();
+    whatsappInitialized = true;
+    console.log('✅ WhatsApp service initialization started');
+  }
 } catch (error) {
   console.error('❌ WhatsApp service initialization failed:', error);
-  // Don't crash the server if WhatsApp fails to initialize
   console.log('🔄 Server will continue without WhatsApp initially...');
 }
 

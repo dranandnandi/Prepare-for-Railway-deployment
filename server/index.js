@@ -201,6 +201,25 @@ app.post('/api/generate-qr', async (req, res) => {
   }
 });
 
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || 3001
+  });
+});
+
+// Basic API status endpoint
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'ok',
+    whatsapp: whatsappService.isReady(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
@@ -223,16 +242,42 @@ if (isProduction) {
   });
 }
 
-// Initialize WhatsApp service
-whatsappService.initialize();
+// Initialize WhatsApp service with error handling
+try {
+  console.log('🔄 Initializing WhatsApp service...');
+  whatsappService.initialize();
+  console.log('✅ WhatsApp service initialization started');
+} catch (error) {
+  console.error('❌ WhatsApp service initialization failed:', error);
+  // Don't crash the server if WhatsApp fails to initialize
+  console.log('🔄 Server will continue without WhatsApp initially...');
+}
+
+// Add production error handling
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  // Don't exit immediately in production, log and continue
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Server continuing despite uncaught exception...');
+  } else {
+    process.exit(1);
+  }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit on unhandled rejections in production
+});
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 LIMS WhatsApp Integration Server running on port ${PORT}`);
+  console.log(`📡 Server listening on 0.0.0.0:${PORT}`);
   if (isProduction) {
     console.log(`🌐 Production app available at ${frontendUrl}`);
   } else {
     console.log(`📱 Dashboard available at http://localhost:5173`);
   }
-  console.log(`🔌 API endpoint: http://localhost:${PORT}/api`);
+  console.log(`🔌 API endpoint available`);
+  console.log(`💚 Health check: /health`);
 });

@@ -11,6 +11,13 @@ import { v4 as uuidv4 } from 'uuid';
 import WhatsAppService from './services/WhatsAppService.js';
 import MessageService from './services/MessageService.js';
 
+console.log('🔥 === NODE.JS STARTUP DIAGNOSTIC LOG ===');
+console.log('📦 All imports loaded successfully');
+console.log('⏰ Process start time:', new Date().toISOString());
+console.log('🔧 Node.js version:', process.version);
+console.log('💻 Platform:', process.platform);
+console.log('📁 Working directory:', process.cwd());
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -42,6 +49,13 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`📥 HTTP Request: ${req.method} ${req.path} from ${req.ip}`);
+  console.log(`📋 Headers: ${JSON.stringify(req.headers, null, 2)}`);
+  next();
+});
 
 // In production, serve the built React app
 if (isProduction) {
@@ -309,6 +323,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Add startup logging
 console.log('🚀 Starting LIMS WhatsApp Integration Server...');
+console.log('📅 Startup Time:', new Date().toISOString());
 console.log('🌍 Environment Check:', {
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
@@ -326,21 +341,56 @@ console.log('🔧 Server Configuration:', {
   RAILWAY_PROJECT_ID: process.env.RAILWAY_PROJECT_ID ? 'Present' : 'Not Present'
 });
 
+console.log('⏳ STEP 1: About to call server.listen()...');
+console.log(`⚡ Attempting to bind to ${HOST}:${PORT}`);
+
 server.listen(PORT, HOST, () => {
+  console.log('✅ SUCCESS: Server.listen() callback executed!');
   console.log(`🚀 LIMS WhatsApp Integration Server running on ${HOST}:${PORT}`);
   console.log(`📡 Server successfully bound to ${HOST}:${PORT}`);
+  console.log('🎯 Node.js HTTP Server Status: ACTIVE & LISTENING');
+  console.log('⏰ Server Start Time:', new Date().toISOString());
+  
   if (isProduction) {
     console.log(`🌐 Production app should be available via Railway domain`);
+    console.log('🔗 Expected URL: https://prepare-for-railway-deployment-production.up.railway.app');
   } else {
     console.log(`📱 Dashboard available at http://localhost:5173`);
   }
-  console.log(`🔌 API endpoints ready`);
-  console.log(`💚 Health check: /health`);
-  console.log(`📊 API status: /api/status`);
+  
+  console.log('� Available Endpoints:');
+  console.log('   💚 Health check: /health');
+  console.log('   📊 API status: /api/status');
+  console.log('   🏠 Main app: /');
+  console.log('   📨 Send message: POST /api/send-message');
+  console.log('   📄 Send report: POST /api/send-report');
+  console.log('   📱 Generate QR: POST /api/generate-qr');
+  
+  console.log('🎉 NODE.JS SERVER IS FULLY OPERATIONAL!');
+  console.log('🔄 Railway should now be able to route traffic to this server');
+  
+  // Add heartbeat logging every 30 seconds to confirm server stays alive
+  setInterval(() => {
+    console.log('💓 HEARTBEAT:', new Date().toISOString(), '- Server is alive and responsive');
+  }, 30000);
+  
 }).on('error', (err) => {
+  console.error('❌ CRITICAL: Server.listen() failed!');
   console.error('❌ Server failed to start:', err);
+  console.error('❌ Error Code:', err.code);
+  console.error('❌ Error Message:', err.message);
+  
   if (err.code === 'EADDRINUSE') {
     console.error(`❌ Port ${PORT} is already in use`);
+    console.error('💡 This means another process is using this port');
   }
+  if (err.code === 'EACCES') {
+    console.error(`❌ Permission denied for port ${PORT}`);
+    console.error('💡 This usually means port requires elevated privileges');
+  }
+  
+  console.error('💀 Node.js server FAILED to start - exiting process');
   process.exit(1);
 });
+
+console.log('⏳ STEP 2: server.listen() call completed, waiting for callback...');

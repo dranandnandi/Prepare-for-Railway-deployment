@@ -307,15 +307,40 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit on unhandled rejections in production
 });
 
+// Add startup logging
+console.log('🚀 Starting LIMS WhatsApp Integration Server...');
+console.log('🌍 Environment Check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  HOST: process.env.HOST,
+  RAILWAY_PROJECT_ID: process.env.RAILWAY_PROJECT_ID ? '✅ Railway Environment Detected' : '❌ Local Environment'
+});
+
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 LIMS WhatsApp Integration Server running on port ${PORT}`);
-  console.log(`📡 Server listening on 0.0.0.0:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+console.log('🔧 Server Configuration:', {
+  PORT,
+  HOST,
+  NODE_ENV: process.env.NODE_ENV,
+  RAILWAY_PROJECT_ID: process.env.RAILWAY_PROJECT_ID ? 'Present' : 'Not Present'
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`🚀 LIMS WhatsApp Integration Server running on ${HOST}:${PORT}`);
+  console.log(`📡 Server successfully bound to ${HOST}:${PORT}`);
   if (isProduction) {
-    console.log(`🌐 Production app available at ${frontendUrl}`);
+    console.log(`🌐 Production app should be available via Railway domain`);
   } else {
     console.log(`📱 Dashboard available at http://localhost:5173`);
   }
-  console.log(`🔌 API endpoint available`);
+  console.log(`🔌 API endpoints ready`);
   console.log(`💚 Health check: /health`);
+  console.log(`📊 API status: /api/status`);
+}).on('error', (err) => {
+  console.error('❌ Server failed to start:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use`);
+  }
+  process.exit(1);
 });

@@ -57,7 +57,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// In production, serve the built React app
+// Serve static files from the React build in production
 if (isProduction) {
   app.use(express.static(path.join(__dirname, '../dist')));
 } else {
@@ -271,13 +271,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// In production, catch-all handler to serve React app
-if (isProduction) {
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
-  });
-}
-
 // Initialize WhatsApp service with error handling
 let whatsappInitialized = false;
 try {
@@ -394,3 +387,10 @@ server.listen(PORT, HOST, () => {
 });
 
 console.log('⏳ STEP 2: server.listen() call completed, waiting for callback...');
+
+// Catch-all route for React SPA (must be last)
+if (isProduction) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+  });
+}

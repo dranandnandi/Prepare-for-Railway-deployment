@@ -13,8 +13,9 @@ This deploys both frontend and backend together as one service.
    ```bash
    git add .
    git commit -m "Prepare for Railway deployment"
-   git push origin main
+   git push origin master
    ```
+   ✅ **COMPLETED** - Your code is now at: https://github.com/dranandnandi/Prepare-for-Railway-deployment
 
 2. **Deploy to Railway**
    - Go to https://railway.app
@@ -35,6 +36,11 @@ This deploys both frontend and backend together as one service.
    - Run `npm run build` (builds React frontend)
    - Run `npm start` (starts Express server)
    - Provide a public URL
+
+   ✅ **DEPLOYMENT SUCCESSFUL!** 
+   - Your app is live at: https://prepare-for-railway-deployment-production.up.railway.app
+   - Health check: https://prepare-for-railway-deployment-production.up.railway.app/health
+   - API status: https://prepare-for-railway-deployment-production.up.railway.app/api/status
 
 ### Option 2: Separate Frontend and Backend Services
 

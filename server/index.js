@@ -216,6 +216,13 @@ app.get('/api/messages', (req, res) => {
 
 app.post('/api/generate-qr', async (req, res) => {
   try {
+    if (whatsappService.isReady()) {
+      // Already authenticated, no need to generate QR
+      setTimeout(() => {
+        res.json({ success: false, message: 'WhatsApp session already active. No QR needed.' });
+      }, 500);
+      return;
+    }
     await whatsappService.generateQR();
     res.json({ success: true, message: 'QR generation initiated' });
   } catch (error) {

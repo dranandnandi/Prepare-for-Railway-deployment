@@ -1,6 +1,13 @@
 class MessageService {
   constructor() {
     this.messages = [];
+    this.messageStats = {
+      total: 0,
+      sent: 0,
+      failed: 0,
+      pending: 0,
+      queued: 0
+    };
     this.templates = {
       standard: `Dear [PatientName], your [TestName] report is now ready.
 Date: [ReportDate]
@@ -56,17 +63,41 @@ No further action required.
   logMessage(messageData) {
     const message = {
       ...messageData,
-      timestamp: messageData.timestamp || new Date().toISOString()
+      timestamp: messageData.timestamp || new Date().toISOString(),
+      attempts: messageData.attempts || 0,
+      lastAttempt: new Date().toISOString()
     };
     
-    this.messages.unshift(message);
+    // Check if message already exists (for updates)
+    const existingIndex = this.messages.findIndex(m => m.id === message.id);
+    
+    if (existingIndex !== -1) {
+      // Update existing message
+      this.messages[existingIndex] = { ...this.messages[existingIndex], ...message };
+      console.log(`📝 Message updated: ${message.id} - ${message.status}`);
+    } else {
+      // Add new message
+      this.messages.unshift(message);
+      console.log(`📝 Message logged: ${message.phoneNumber} - ${message.status}`);
+    }
     
     // Keep only last 1000 messages
     if (this.messages.length > 1000) {
       this.messages = this.messages.slice(0, 1000);
     }
     
-    console.log(`📝 Message logged: ${message.phoneNumber} - ${message.status}`);
+    // Update statistics
+    this.updateStats();
+  }
+
+  updateStats() {
+    this.messageStats = {
+      total: this.messages.length,
+      sent: this.messages.filter(m => m.status === 'sent' || m.status === 'delivered' || m.status === 'read').length,
+      failed: this.messages.filter(m => m.status === 'failed').length,
+      pending: this.messages.filter(m => m.status === 'pending').length,
+      queued: this.messages.filter(m => m.status === 'queued').length
+    };
   }
 
   getMessages(limit = 50) {
@@ -74,20 +105,50 @@ No further action required.
   }
 
   updateMessageStatus(messageId, status) {
+    const updateData = {
+      id: messageId,
+      status,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Add error information if status is failed
+    if (status === 'failed' && arguments.length > 2) {
+      updateData.error = arguments[2];
+    }
+    
+    this.logMessage(updateData);
+  }
+
+  updateMessageStatusLegacy(messageId, status) {
     const message = this.messages.find(m => m.id === messageId);
     if (message) {
       message.status = status;
       message.updatedAt = new Date().toISOString();
+      this.updateStats();
     }
   }
 
   getMessageStats() {
-    const total = this.messages.length;
-    const sent = this.messages.filter(m => m.status === 'sent').length;
-    const failed = this.messages.filter(m => m.status === 'failed').length;
-    const pending = this.messages.filter(m => m.status === 'pending').length;
-    
-    return { total, sent, failed, pending };
+    return { ...this.messageStats };
+  }
+
+  getFailedMessages(limit = 10) {
+    return this.messages
+      .filter(m => m.status === 'failed')
+      .slice(0, limit)
+      .map(m => ({
+        id: m.id,
+        phoneNumber: m.phoneNumber,
+        patientName: m.patientName,
+        error: m.error,
+        attempts: m.attempts,
+        timestamp: m.timestamp
+      }));
+  }
+
+  getRecentActivity(hours = 24) {
+    const cutoff = new Date(Date.now() - (hours * 60 * 60 * 1000));
+    return this.messages.filter(m => new Date(m.timestamp) > cutoff);
   }
 }
 

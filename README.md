@@ -29,7 +29,7 @@ A comprehensive web application that connects Laboratory Information Management 
    ```
 
 3. **Connect WhatsApp**
-   - Open the dashboard at `http://localhost:5173`
+   - Open the dashboard at `http://localhost:4173`
    - Click "Connect" to generate a QR code
    - Scan the QR code with your WhatsApp mobile app
    - The connection will persist across server restarts
